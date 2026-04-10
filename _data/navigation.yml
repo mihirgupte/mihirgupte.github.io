@@ -1,9 +1,9 @@
 # main links
 main:
-  - title: "About"
-    url: /pages/about/
   - title: "Home"
     url: /
+  - title: "About"
+    url: /about/
   - title: "Example Link"
     url: /example/
   # - title: "About"
