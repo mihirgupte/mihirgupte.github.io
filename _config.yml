@@ -114,11 +114,11 @@ analytics:
 
 # Site Author
 author:
-  name             : "Mihir Gupte | मिहीर गुप्ते"
+  name             : "Mihir Gupte | मिहिर गुप्ते"
   avatar           : "/assets/images/mihirgupte.jpeg" # path of avatar image, e.g. "/assets/images/bio-photo.jpg"
-  bio              : "I am an **amazing** person."
+  bio              : "SWE / AI Researcher @ GM"
   location         : "Royal Oak, MI"
-  email            : "mihir.a.gupte@gmail.com"
+  #email            : "mihir.a.gupte@gmail.com"
   # fediverse      : "@you@instance.social"  # used for fediverse:creator meta tag
   links:
     - label: "Email"
