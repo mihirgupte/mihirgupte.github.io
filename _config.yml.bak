@@ -264,12 +264,6 @@ pagination:
     after: 2
 
 
-# Collections
-collections:
-  papers:
-    output: true
-    permalink: /:collection/:path/
-
 # Plugins (previously gems:)
 plugins:
   - jekyll-paginate
