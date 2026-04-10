@@ -1,7 +1,7 @@
 ---
 layout: single
 title: "Is Implicit Knowledge Enough for LLMs? A RAG Approach for Tree-based Structures"
-permalink: /papers/towards-autoformalization/
+permalink: /papers/implicit-knowledge/
 author_profile: true
 date: 2025-10-12
 excerpt: "Generating Implicit Knowledge results in more efficient vector database storage especially for hierarchial structures."
