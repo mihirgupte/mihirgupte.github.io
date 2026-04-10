@@ -1,6 +1,6 @@
 ---
 layout: single
-title: "Work"
+title: "Posts"
 permalink: /work/
 author_profile: true
 toc: true
