@@ -1,0 +1,829 @@
+---
+layout: null
+permalink: /papers/autoformalization_web.html
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Towards Autoformalization of LLM-generated Outputs for Requirement Verification</title>
+
+<!-- MathJax 3 -->
+<script>
+MathJax = {
+  tex: {
+    inlineMath: [['$', '$']],
+    displayMath: [['$$', '$$']],
+    tags: 'ams'
+  },
+  options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+
+<style>
+  /* ── Reset ────────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --accent:    #0d7377;
+    --accent2:   #11999e;
+    --accent3:   #d9f0f0;
+    --bg:        #f3f6f6;
+    --surface:   #ffffff;
+    --border:    #cfd4d3;
+    --text:      #40514e;
+    --muted:     #6b7b79;
+    --muted2:    #9ba1a0;
+    --code-bg:   #263238;
+    --code-text: #eff;
+    --fig-bg:    #f3f6f6;
+    --tag-bg:    #d9f0f0;
+    --tag-text:  #0d7377;
+    --radius:    8px;
+    --sans:      "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --serif:     "Georgia", "Times New Roman", serif;
+    --mono:      "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    font-size: 16.5px;
+    line-height: 1.8;
+    color: var(--text);
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* ── Inter font from Google ───────────────────────────── */
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+  /* ── Outer shell ──────────────────────────────────────── */
+  .shell {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 0 20px 100px;
+  }
+
+  /* ── Top nav bar ──────────────────────────────────────── */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 0;
+    border-bottom: 2px solid var(--accent2);
+    margin-bottom: 52px;
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 0.02em;
+  }
+
+  .topbar-left { font-weight: 700; color: var(--accent2); letter-spacing: 0.04em; }
+  .topbar-right { font-size: 12.5px; }
+
+  /* ── Hero / title area ────────────────────────────────── */
+  .hero { margin-bottom: 40px; }
+
+  .topic-tag {
+    display: inline-block;
+    background: var(--tag-bg);
+    color: var(--tag-text);
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 999px;
+    margin-bottom: 18px;
+    border: 1px solid #a8d8d9;
+  }
+
+  .paper-title {
+    font-size: 2.1rem;
+    font-weight: 700;
+    line-height: 1.25;
+    color: #1a2e2c;
+    margin-bottom: 28px;
+    letter-spacing: -0.02em;
+  }
+
+  /* ── Authors row ──────────────────────────────────────── */
+  .authors-row {
+    display: flex;
+    gap: 28px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 28px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .author-chip {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .author-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text);
+  }
+
+  .author-email {
+    font-size: 0.82rem;
+    color: var(--muted);
+    text-decoration: none;
+    font-family: var(--mono);
+  }
+
+  .author-email:hover { color: var(--accent); text-decoration: underline; }
+
+  .author-sep {
+    width: 1px;
+    height: 34px;
+    background: var(--border);
+    align-self: center;
+  }
+
+  /* ── Meta row (date, tags) ────────────────────────────── */
+  .meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 36px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .kw-badge {
+    background: var(--tag-bg);
+    color: var(--tag-text);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 999px;
+    border: 1px solid #a8d8d9;
+  }
+
+  .meta-dot { color: var(--muted2); }
+
+  /* ── Abstract ─────────────────────────────────────────── */
+  .abstract-card {
+    background: var(--accent3);
+    border-radius: var(--radius);
+    padding: 24px 28px;
+    margin-bottom: 52px;
+    border: 1px solid #a8d8d9;
+  }
+
+  .abstract-card .abstract-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+
+  .abstract-card p {
+    font-size: 0.97rem;
+    line-height: 1.78;
+    color: #2a3d3b;
+  }
+
+  /* ── Section headings ─────────────────────────────────── */
+  .section-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 52px 0 36px;
+  }
+
+  h1.sec {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 18px;
+    letter-spacing: -0.01em;
+  }
+
+  h1.sec .sec-num {
+    color: var(--accent2);
+    margin-right: 10px;
+  }
+
+  h2.subsec {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text);
+    margin: 32px 0 12px;
+  }
+
+  h2.subsec .sec-num { color: var(--accent2); margin-right: 6px; font-weight: 500; }
+
+  h3.para-head {
+    font-size: 0.97rem;
+    font-weight: 700;
+    color: var(--text);
+    display: inline;
+  }
+
+  /* ── Body copy ────────────────────────────────────────── */
+  section p {
+    margin-bottom: 16px;
+    color: var(--text);
+    line-height: 1.82;
+  }
+
+  section ol, section ul {
+    margin: 12px 0 20px 24px;
+  }
+
+  section li { margin-bottom: 10px; line-height: 1.72; }
+
+  em { font-style: italic; }
+  strong { font-weight: 600; }
+
+  /* ── Inline quote / requirement block ────────────────── */
+  p.req-block {
+    background: #ecf7f7;
+    border-left: 3px solid var(--accent2);
+    padding: 10px 16px;
+    border-radius: 0 var(--radius) var(--radius) 0;
+    font-style: italic;
+    color: var(--text);
+    margin: 16px 0;
+  }
+
+  /* ── Figures ──────────────────────────────────────────── */
+  figure {
+    margin: 32px auto;
+    text-align: center;
+  }
+
+  .fig-inner {
+    display: inline-block;
+    max-width: 100%;
+    background: var(--fig-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 20px 0;
+    overflow: hidden;
+  }
+
+  figure img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 4px;
+  }
+
+  figure img.w75 { max-width: 75%; margin: 0 auto; }
+  figure img.w100 { max-width: 100%; }
+
+  figcaption {
+    font-size: 13px;
+    color: var(--muted);
+    padding: 12px 16px 14px;
+    text-align: center;
+    line-height: 1.5;
+    border-top: 1px solid var(--border);
+    margin-top: 12px;
+  }
+
+  figcaption strong { color: var(--text); font-weight: 600; }
+
+  /* ── Gherkin box ──────────────────────────────────────── */
+  .gherkin-box {
+    border: 1.5px solid #bbb;
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    margin: 24px 0;
+    font-size: 0.91rem;
+    line-height: 1.75;
+    background: #fdfdfc;
+    font-family: var(--mono);
+  }
+
+  .gherkin-box .scenario-title {
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 6px;
+  }
+
+  .gherkin-box .scenario-line { margin-bottom: 2px; }
+
+  .gherkin-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16px;
+    font-size: 0.85rem;
+    font-family: var(--sans);
+  }
+
+  .gherkin-table th, .gherkin-table td {
+    border: 1px solid #ccc;
+    padding: 7px 12px;
+    text-align: center;
+  }
+
+  .gherkin-table thead tr:first-child th {
+    background: #b8dcdd;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: var(--accent);
+  }
+
+  .gherkin-table thead tr:last-child th {
+    background: #d9f0f0;
+    font-weight: 600;
+    font-size: 0.82rem;
+    color: var(--text);
+  }
+
+  /* ── Code blocks ──────────────────────────────────────── */
+  pre.code-block {
+    background: var(--code-bg);
+    border: 1px solid #3a4a50;
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    font-family: var(--mono);
+    font-size: 0.81rem;
+    line-height: 1.6;
+    overflow-x: auto;
+    white-space: pre;
+    margin: 16px 0;
+    color: var(--code-text);
+  }
+
+  /* ── Citations ────────────────────────────────────────── */
+  sup.cite a {
+    color: var(--accent2);
+    text-decoration: none;
+    font-size: 0.73rem;
+    font-weight: 600;
+  }
+
+  sup.cite a:hover { text-decoration: underline; }
+
+  /* ── References ───────────────────────────────────────── */
+  .references ol { padding-left: 28px; }
+
+  .references li {
+    font-size: 0.875rem;
+    line-height: 1.65;
+    margin-bottom: 12px;
+    color: var(--text);
+  }
+
+  /* ── Appendix label ───────────────────────────────────── */
+  .appendix-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted2);
+    margin-bottom: 6px;
+  }
+
+  /* ── Responsive ───────────────────────────────────────── */
+  @media (max-width: 600px) {
+    .paper-title { font-size: 1.55rem; }
+    .authors-row { gap: 16px; }
+    .author-sep { display: none; }
+    figure img.w75 { max-width: 95%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- ── Top bar ─────────────────────────────────────────── -->
+  <nav class="topbar">
+    <span class="topbar-left">Technical Report</span>
+    <span class="topbar-right">Formal Verification &middot; LLMs &middot; 2025</span>
+  </nav>
+
+  <!-- ── Hero ────────────────────────────────────────────── -->
+  <header class="hero">
+    <div class="topic-tag">Autoformalization &nbsp;&#183;&nbsp; Lean 4 &nbsp;&#183;&nbsp; Requirement Verification</div>
+
+    <h1 class="paper-title">Towards Autoformalization of LLM-generated&nbsp;Outputs for Requirement Verification</h1>
+
+    <div class="authors-row">
+      <div class="author-chip">
+        <span class="author-name">Mihir Gupte</span>
+        <a class="author-email" href="mailto:mihir.gupte@gm.com">mihir.gupte@gm.com</a>
+      </div>
+      <div class="author-sep"></div>
+      <div class="author-chip">
+        <span class="author-name">Ramesh S.</span>
+        <!-- a class="author-email" href="mailto:ramesh.s@gm.com">ramesh.s@gm.com</a-->
+      </div>
+    </div>
+
+    <div class="meta-row">
+      <span>2025</span>
+      <span class="meta-dot">·</span>
+      <span class="kw-badge">Autoformalization</span>
+      <span class="kw-badge">Large Language Models</span>
+      <span class="kw-badge">Formal Verification</span>
+      <span class="kw-badge">Logical Equivalence</span>
+      <span class="kw-badge">Gherkin Scenarios</span>
+    </div>
+
+    <!-- Abstract -->
+    <div class="abstract-card">
+      <div class="abstract-label">Abstract</div>
+      <p>Autoformalization, the process of translating informal statements into formal logic, has gained renewed interest with the emergence of powerful Large Language Models (LLMs). While LLMs show promise in generating structured outputs from natural language (NL), such as Gherkin Scenarios from NL feature requirements, there's currently no formal method to verify if these outputs are accurate. This paper takes a preliminary step toward addressing this gap by exploring the use of a simple LLM-based autoformalizer to verify LLM-generated outputs against a small set of natural language requirements. We conducted two distinct experiments. In the first one, the autoformalizer successfully identified that two differently-worded NL requirements were logically equivalent, demonstrating the pipeline's potential for consistency checks. In the second, the autoformalizer was used to identify a logical inconsistency between a given NL requirement and an LLM-generated output, highlighting its utility as a formal verification tool. Our findings, while limited, suggest that autoformalization holds significant potential for ensuring the fidelity and logical consistency of LLM-generated outputs, laying a crucial foundation for future, more extensive studies into this novel application.</p>
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- 1. Introduction                                        -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <section id="sec-introduction">
+    <h1 class="sec"><span class="sec-num">1</span>Introduction</h1>
+
+    <p>As Language Model-based (LLM) applications become more prevalent, there's an increased need for a framework to verify their outputs. Concurrently, the field of autoformalization<sup class="cite"><a href="#ref-8">[8]</a></sup>, the process of translating informal statements into formal logic, has gained significant traction, fueled by LLMs' impressive ability to translate informal statements into formats like first-order logic.</p>
+
+    <p>In this paper, we explore the outputs of a sample tool used for building LLM-powered applications to automate the generation of test case scenarios from natural language requirements. For example, a requirement such as: <em>"Given the vehicle speed $\geq$ 10, When the seatbelt is unfastened, then initiate Seatbelt Reminder Chime"</em> can be used to generate a structured Gherkin scenario. However, a major problem arises: there is no formal method to verify if the LLM-generated scenario accurately reflects the original requirement. Figure 1 illustrates an example of an LLM-generated output for a specific requirement. While these tools show impressive results, a critical gap remains: there is no way to formally verify if the generated scenario matches the given requirement.</p>
+
+    <figure id="fig1">
+      <div class="fig-inner">
+        <img class="w100" src="figs/fig1-sample-generated.png" alt="Sample Output generated by a LLM-powered tool on a Natural Language requirement">
+        <figcaption><strong>Figure 1.</strong> Sample Output generated by a LLM-powered tool on a Natural Language requirement.</figcaption>
+      </div>
+    </figure>
+
+    <p>This is where Autoformalization presents a promising solution<sup class="cite"><a href="#ref-25">[25]</a></sup>. By translating both the natural language requirement and the LLM-generated output into a formal logical representation, we can use formal verification tools to check for logical equivalence. For this paper, we explore this potential using DeepSeek-Prover<sup class="cite"><a href="#ref-1">[1]</a></sup>, an LLM fine-tuned on formal mathematical data, to perform this verification.</p>
+
+    <p>In this paper, we take the first steps to explore a novel application of autoformalization in a limited scope:</p>
+    <ol>
+      <li>We demonstrate a basic pipeline using DeepSeek-Prover to verify if an LLM-generated output correctly matches its corresponding natural language requirement.</li>
+      <li>We explore a pipeline to determine if two differently written natural language requirements are logically equivalent and point to the same scenario.</li>
+    </ol>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- 2. Related Work                                        -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <hr class="section-divider">
+  <section id="sec-related-work">
+    <h1 class="sec"><span class="sec-num">2</span>Related Work</h1>
+
+    <p>Recent work on autoformalization has largely focused on two key areas: <strong>creating high-quality datasets</strong> and <strong>developing new strategies for large language models (LLMs) training</strong> to handle formal logic.</p>
+
+    <p>On the data front, researchers have created several specialized datasets to facilitate the training of autoformalizer models. Notable examples include ProofNet <sup class="cite"><a href="#ref-13">[13]</a></sup> and MiniF2F <sup class="cite"><a href="#ref-15">[15]</a></sup>. Despite these efforts, a major challenge across the field remains the scarcity of high-quality data due to its highly specific and technical nature. While many early datasets focused on a single formal language like Lean <sup class="cite"><a href="#ref-2">[2]</a></sup>, recent studies by <sup class="cite"><a href="#ref-12">[12]</a></sup> found that training models on multiple languages, such as Lean, Isabelle <sup class="cite"><a href="#ref-16">[16]</a></sup>, and Coq <sup class="cite"><a href="#ref-17">[17]</a></sup>, can actually improve performance. This has led to a focus on new methods to increase data quantity and diversity <sup class="cite"><a href="#ref-14">[14]</a></sup>.</p>
+
+    <p>In parallel, a significant portion of the research landscape is dedicated to developing more effective strategies for LLMs to tackle formal problems. A key innovation was the "draft, sketch, and prove" method proposed by <sup class="cite"><a href="#ref-4">[4]</a></sup>, which trains models to create proof outlines as a guide for formalizing theorems. This idea inspired methods that teach models to break down large goals into smaller, more manageable sub-goals, a technique used by models like DeepSeek-Prover <sup class="cite"><a href="#ref-1">[1]</a></sup>. Other research has explored using more efficient search algorithms to navigate large proof spaces <sup class="cite"><a href="#ref-19">[19]</a></sup> and harnessing reinforcement learning to improve success rates <sup class="cite"><a href="#ref-7">[7]</a></sup><sup class="cite"><a href="#ref-20">[20]</a></sup>.</p>
+
+    <p>Another key area of research addresses the non-deterministic nature of LLMs, which often leads to a significant discrepancy between <em>pass@1</em> and <em>pass@k</em> results for autoformalizer models <sup class="cite"><a href="#ref-11">[11]</a></sup>. To alleviate this, a breadth of work focuses on establishing frameworks that utilize symbolic equivalence <sup class="cite"><a href="#ref-11">[11]</a></sup> or employ Retrieval-Augmented Generation (RAG) methods to retrieve precise formal definitions for contextual grounding <sup class="cite"><a href="#ref-21">[21]</a></sup>. From a different perspective, autoformalization is also being used as a framework to verify variations of solutions generated by LLMs for mathematical problems <sup class="cite"><a href="#ref-10">[10]</a></sup>.</p>
+
+    <p>Apart from verifying formal statements from natural language, a significant amount of work focuses on using LLMs to solve mathematical problems at all levels, from high school <sup class="cite"><a href="#ref-15">[15]</a></sup> to undergraduate-level mathematics <sup class="cite"><a href="#ref-13">[13]</a></sup>. Mathematics is a primary focus for autoformalization as the problem extends naturally to formal mathematical proofs <sup class="cite"><a href="#ref-9">[9]</a></sup>. This research also branches into other domains, including geometry-based problems <sup class="cite"><a href="#ref-24">[24]</a></sup> and partial differential equations for physics <sup class="cite"><a href="#ref-25b">[25b]</a></sup>. However, the potential for autoformalization extends beyond traditional academic fields, with significant scope in areas such as code-based verification <sup class="cite"><a href="#ref-22">[22]</a></sup> and even biomedical fact verification <sup class="cite"><a href="#ref-23">[23]</a></sup>.</p>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- 3. Background                                          -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <hr class="section-divider">
+  <section id="sec-background">
+    <h1 class="sec"><span class="sec-num">3</span>Background</h1>
+
+    <h2 class="subsec"><span class="sec-num">3.1</span>LLM for Formal Theorem Proving</h2>
+    <p>As high-quality datasets for formal mathematical theorems have become more widely adopted, researchers have begun fine-tuning language models for the sole purpose of theorem proving. While LLMs have shown success in generalizing natural language, generalizing formal mathematics remains a significant challenge. However, recent advancements in reasoning-based models have led to considerable improvement in this area.</p>
+
+    <p>A key development is the approach proposed by <sup class="cite"><a href="#ref-4">[4]</a></sup>, which uses LLMs to draft proof sketches and decompose complex problems into smaller, more manageable subgoals. This method has become a popular training strategy for autoformalizer models. DeepSeek-Prover-v2 <sup class="cite"><a href="#ref-1">[1]</a></sup> takes this approach by training the model to perform a chain-of-thought process, recursively searching for proofs via subgoal decomposition and resolution. The model is trained on data from formal languages like Lean, which is crucial for our purpose of converting Natural Language into Lean syntax.</p>
+
+    <p>DeepSeek-Prover-v2 comes in two versions: a 7B and a 671B model. For this paper, we use the 7B model due to resource constraints. The model's effectiveness for our task stems from two key factors: its training on the Lean 4 formal language, which is necessary for our pipeline, and its extensive pre-training in natural language, which enables it to effectively translate and formalize requirements.</p>
+
+    <p>Other notable models trained for formal mathematical verification include those from <sup class="cite"><a href="#ref-5">[5]</a></sup>, <sup class="cite"><a href="#ref-7">[7]</a></sup> and <sup class="cite"><a href="#ref-6">[6]</a></sup>.</p>
+
+    <h2 class="subsec"><span class="sec-num">3.2</span>Formalizing Theorems of NL Requirements Using Lean</h2>
+    <p>Lean 4 <sup class="cite"><a href="#ref-2">[2]</a></sup> is a powerful theorem prover and formal language. It allows for the expression of complex mathematical and logical statements in a precise, code-like syntax. This makes it the ideal language for most LLM-based formal theorem provers, including DeepSeek-Prover-v2, which is trained to generate proofs in Lean 4. In our experiment, we leverage this capability for two main purposes: to translate natural language (NL) requirements into formal Lean propositions and to formally verify their logical equivalence using theorems.</p>
+
+    <p>We use an autoformalizer to convert a given NL requirement into a Lean proposition. Each requirement can be expressed as a logical statement. Given the nature of our requirements (e.g., "If A then B"), they naturally translate into a propositional implication ($A \rightarrow B$). The autoformalizer's output is a theorem proposition that can be evaluated as either true or false.</p>
+
+    <p>As seen in Figure 2, a given natural language requirement is transformed into a formal Lean statement by our autoformalizer. This formal representation is the foundation for the verification pipelines described in the following sections.</p>
+
+    <figure id="fig2">
+      <div class="fig-inner">
+        <img class="w75" src="figs/fig2-sample-lean.png" alt="Sample Lean Output from DeepSeek-Prover-V2">
+        <figcaption><strong>Figure 2.</strong> Sample Lean Output from DeepSeek-Prover-V2.</figcaption>
+      </div>
+    </figure>
+
+    <h2 class="subsec"><span class="sec-num">3.3</span>Biconditional Equivalence of Propositions</h2>
+    <p>In formal logic, a biconditional or material equivalence is a logical connective that links two propositions and is true only when both propositions share the same truth value. It is represented by the symbol $\leftrightarrow$, and a statement of the form $A \leftrightarrow B$ can be read as "A if and only if B," or simply, "A is equivalent to B".</p>
+
+    <p>In our experiment, we use this principle to formally verify the logical equivalence of two statements. We take a pair of natural language statements — either one requirement and one LLM-generated output, or two distinct requirements — and translate each into a formal proposition using our autoformalizer. Let's call these propositions $P_A$ and $P_B$.</p>
+
+    <p>The core of our verification process is a theorem-proving task. We instruct the LLM-based theorem prover to prove the biconditional statement $P_A \leftrightarrow P_B$. The model attempts to prove that the propositions are logically equivalent by demonstrating both the forward implication ($P_A \rightarrow P_B$) and the reverse implication ($P_B \rightarrow P_A$). If the model successfully proves the theorem, we can conclude that the original natural language statements are logically consistent. Conversely, if it cannot, it indicates a logical discrepancy between the two.</p>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- 4. Methodology                                         -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <hr class="section-divider">
+  <section id="sec-methodology">
+    <h1 class="sec"><span class="sec-num">4</span>Methodology</h1>
+
+    <p>We follow a simple workflow for both the experiments that we conduct:</p>
+    <ol>
+      <li>Formalize given statement pairs in a Propositional Form in Lean using the LLM.</li>
+      <li>Ground the generated variables in the propositional definitions.</li>
+      <li>Use the LLM to formally prove the biconditional equivalence of the propositions, then check for logical consistency in Lean.</li>
+    </ol>
+    <p>With this, we elaborate on our methodology in detail in the below sections.</p>
+
+    <figure id="fig3">
+      <div class="fig-inner">
+        <img class="w75" src="figs/fig3-r1-output.png" alt="Lean Formalization of Requirement R1">
+        <figcaption><strong>Figure 3.</strong> Lean Formalization of Requirement $R_1$.</figcaption>
+      </div>
+    </figure>
+
+    <figure id="fig4">
+      <div class="fig-inner">
+        <img class="w75" src="figs/fig4-r2-output.png" alt="Lean Formalization of Requirement R2">
+        <figcaption><strong>Figure 4.</strong> Lean Formalization of Requirement $R_2$.</figcaption>
+      </div>
+    </figure>
+
+    <h2 class="subsec"><span class="sec-num">4.1</span>Verifying Logical Equivalence of Requirement Pairs</h2>
+
+    <p>Given a set of two natural language requirements:</p>
+
+    <p class="req-block">$R_1$: If Vehicle Speed Average Driven $\geq$ CALIBRATABLE Seatbelt Reminder Speed OR Seatbelt is inactive then initiate SeatBelt Chime</p>
+    <p class="req-block">$R_2$: If mean vehicle speed is greater than CALIBRATABLE Seatbelt Reminder Speed OR Seatbelt is not plugged in then initiate chime for seatbelt</p>
+
+    <p>These are two different Natural Language statements pointing to the same requirement, however that is very hard to determine unless extensively checked. To automatically verify if they are logically equivalent, we use our workflow. We can see the output generated by DeepSeek-Prover on $R_1$ and $R_2$ in Figure 3 and Figure 4 respectively.</p>
+
+    <p>We then need to ground the variables. This effort is done manually. By grounding, we need to manually point to the Lean compiler that a set of variables having different naming conventions actually refer to the same variable. There is scope to automate this process using the LLM as well, however due to certain constraints, we choose to do this step manually. Once we specify that, we provide the model with all the information and ask it to either prove the theorem, if possible. The template format we specify to achieve that is provided in <a href="#sec-appendix" style="color:var(--accent);text-decoration:none;font-weight:500;">Appendix A</a>. The final result of the LLM-generated Lean 4 code in the Lean compiler is provided in Figure 5.</p>
+
+    <figure id="fig5">
+      <div class="fig-inner">
+        <img class="w100" src="figs/fig5-proved-theorem.png" alt="Using Lean 4 to prove R1 and R2 are logically equivalent">
+        <figcaption><strong>Figure 5.</strong> Using Lean 4 to prove $R_1$ and $R_2$ are logically equivalent.</figcaption>
+      </div>
+    </figure>
+
+    <h2 class="subsec"><span class="sec-num">4.2</span>Verifying LLM-generated Outputs with NL Requirement</h2>
+
+    <p>Given a Natural Language Requirement $R_3$:</p>
+
+    <p class="req-block"><em>When Front Passenger Seat Belt Status changes to "Fastened" then the Front Passenger Seat Belt Reminder Indication On shall be set to FALSE.</em></p>
+
+    <p>and a sample LLM-generated Gherkin Output $G_3$ for $R_3$:</p>
+
+    <div class="gherkin-box">
+      <div class="scenario-title">Scenario Outline: Seatbelt reminder activation and deactivation based on seatbelt status and seat occupancy</div>
+      <div class="scenario-line">Given the front passenger seat is &lt;seat_occupancy&gt;</div>
+      <div class="scenario-line">And the front passenger seat belt status is &lt;initial_seatbelt_status&gt;</div>
+      <div class="scenario-line">When the front passenger seat belt status changes to &lt;final_seatbelt_status&gt;</div>
+      <div class="scenario-line">Then the Front Passenger Seat Belt Reminder Indication On shall be set to &lt;expected_reminder_status&gt;</div>
+      <table class="gherkin-table">
+        <thead>
+          <tr><th colspan="4">Examples: Seatbelt status and occupancy variations</th></tr>
+          <tr>
+            <th>seat_occupancy</th>
+            <th>initial_seatbelt_status</th>
+            <th>final_seatbelt_status</th>
+            <th>expected_reminder_status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Occupied</td><td>Unfastened</td><td>Fastened</td><td>FALSE</td></tr>
+          <tr><td>Occupied</td><td>Fastened</td><td>Unfastened</td><td>TRUE</td></tr>
+          <tr><td>Unoccupied</td><td>Unfastened</td><td>Fastened</td><td>FALSE</td></tr>
+          <tr><td>Unoccupied</td><td>Fastened</td><td>Unfastened</td><td>FALSE</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>We hypothesize that the LLM-generated Gherkin scenario ($G_3$), due to its added complexity, will not be logically equivalent to the original requirement ($R_3$). We can see the output generated by DeepSeek-Prover on $R_3$ and $G_3$ in Figure 6 and Figure 7 respectively.</p>
+
+    <p>In these set of examples, if we look closely we can observe that the LLM-generated Gherkin scenario $G_3$ contains a lot of extra variables that are not present in the original requirement $R_3$, hence they are logically inconsistent. Specifically speaking, the natural language requirement $R_3$ does not consist references of <em>seat_occupancy</em> and <em>final_seatbelt_status</em>. So ideally, <strong>the Lean code provided by the Autoformalizer LLM should either prove they are inconsistent or fail to run</strong>.</p>
+
+    <p>The final result of the LLM-generated Lean 4 code in the Lean compiler is provided in Figure 8.</p>
+
+    <figure id="fig6">
+      <div class="fig-inner">
+        <img class="w75" src="figs/fig6-r3-output.png" alt="Lean Formalization of Requirement R3">
+        <figcaption><strong>Figure 6.</strong> Lean Formalization of Requirement $R_3$.</figcaption>
+      </div>
+    </figure>
+
+    <figure id="fig7">
+      <div class="fig-inner">
+        <img class="w75" src="figs/fig7-g3-output.png" alt="Lean Formalization of Gherkin Scenario G3">
+        <figcaption><strong>Figure 7.</strong> Lean Formalization of Gherkin Scenario $G_3$.</figcaption>
+      </div>
+    </figure>
+
+    <figure id="fig8">
+      <div class="fig-inner">
+        <img class="w100" src="figs/fig8-failed-theorem.png" alt="Lean code fails to prove R3 and G3 are logically equivalent">
+        <figcaption><strong>Figure 8.</strong> Lean code fails to prove $R_3$ and $G_3$ are logically equivalent.</figcaption>
+      </div>
+    </figure>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- 5. Discussion                                          -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <hr class="section-divider">
+  <section id="sec-discussion">
+    <h1 class="sec"><span class="sec-num">5</span>Discussion</h1>
+
+    <p>The Autoformalization pipeline we explored in this paper to verify LLM-outputs is given by Figure 9. In this pipeline, we do the following things:</p>
+
+    <figure id="fig9">
+      <div class="fig-inner">
+        <img class="w100" src="figs/fig9-autoformalier-pipeline.png" alt="Pipeline for Autoformalization">
+        <figcaption><strong>Figure 9.</strong> Pipeline for Autoformalization. (1) are the NL Requirements. (2) is the proposition created in Lean by the LLM. (3) is how we manually ground the variables created by the propositions. (4) is to provide this manually grounded theorem to the Autoformalizer LLM to prove/disprove equivalence.</figcaption>
+      </div>
+    </figure>
+
+    <ol>
+      <li>We begin with a natural language (NL) requirement and use an autoformalizer-based LLM to translate this informal statement into a formal mathematical proposition in Lean as shown by (1) and (2) in Figure 9.</li>
+      <li>We then use these generated propositions to ground the variables in a theorem, such that we define that a given set of generated variables logically point to the same hypothesis. This is the step we take to go from (2) to (3) in Figure 9.</li>
+      <li>The final, grounded theorem is then provided to the autoformalizer-based LLM. The model's purpose is to generate Lean code to prove the biconditional equivalence of the two propositions which is done in (4).</li>
+    </ol>
+
+    <p>The outcome of this step either yields a successful proof, thereby confirming logical equivalence, or a failed proof, which indicates that the statements are not logically consistent. The model's failure to complete a proof in Lean is a key indicator of a discrepancy, as it signals that the two statements cannot be reconciled under the given logical system.</p>
+
+    <h2 class="subsec"><span class="sec-num">5.1</span>Formalization is Dependent on the Language Model's Interpretability</h2>
+    <p>Previous work <sup class="cite"><a href="#ref-8">[8]</a></sup> has noted that informalizing a formal statement is often easier for LLMs than formalizing an informal statement. This difficulty stems from the autoregressive nature of current-generation LLMs, which are heavily reliant on token structure, making them well-suited for generation but less reliable for the precise, rigid syntax required by formal languages.</p>
+
+    <p>The core challenge lies in the mismatch between the processes: formalization is, by definition, non-ambiguous and rigid, yet it is being performed by an inherently non-deterministic, probabilistic model. While the flexibility of LLMs allows them to process the varied and informal nature of natural language inputs, the resulting formal output itself should not be subject to non-deterministic interpretation. This problem is magnified when the source material is ambiguous, a common characteristic of system requirements. The resulting formalized interpretation (Lean code, in our case) must accurately capture the precise intent of the requirement, including subtle system nuances.</p>
+
+    <p>For example, consider the requirement:</p>
+
+    <p class="req-block">$R_4$: "When the seatbelt is Unfastened and the vehicle is in motion then the Front Passenger Seat Belt Reminder Indication On shall be set to TRUE."</p>
+
+    <p>The condition "vehicle in motion" can have different interpretations depending on the system design (e.g., speed $> 0$, or gear not in park).</p>
+
+    <figure id="fig10">
+      <div class="fig-inner">
+        <img class="w75" src="figs/fig10-inconsistent_formalization.png" alt="Generated Lean Code for ambiguous informal statement">
+        <figcaption><strong>Figure 10.</strong> Generated Lean Code for ambiguous informal statement.</figcaption>
+      </div>
+    </figure>
+
+    <p>In Figure 10, theoretically both the generated Lean code snippets represent the input requirement properly given the amount of information about the system. However, they are not formally equivalent because they represent "vehicle in motion" differently: pass@1 represents the variable as a boolean whereas pass@2 represents the variable as an integer and hence it's not possible to formally say that both the code snippets are logically equivalent even though they were derived from the same informal requirement. This represents a flaw of a design solely relying on informal natural language requirements without being grounded in the system more deeply.</p>
+
+    <h2 class="subsec"><span class="sec-num">5.2</span>Can Grounding of Variables be Automated?</h2>
+
+    <p>In our autoformalization pipeline (Figure 9, $(2) \rightarrow (3) \rightarrow (4)$), a critical and inescapable requirement is the grounding of overlapping variables to prove logical equivalence. This necessity arises because Large Language Models (LLMs) frequently interpret and name variables differently across separate formalizations, even when the underlying concept is the same. For instance, Figures 10, 3 and 4 clearly demonstrate the issue, where a single physical parameter is represented using distinct variable names and types.</p>
+
+    <p>This challenge is a direct consequence of an LLM formalizer making assumptions based on limited contextual knowledge of the target system. The inconsistency highlights the necessity of grounding the entire autoformalization pipeline within the system's defined ontology to achieve reliable results.</p>
+
+    <p>Although variable grounding is a purely logical process and should ideally be done algorithmically to eliminate human error, it currently remains the most time-consuming step. We propose two primary directions for automating this semantic matching task:</p>
+    <ol>
+      <li><strong>Contextual Single-Pass Formalization:</strong> A naive yet potentially effective approach is to autoformalize the given set of statements along with system information in a single, comprehensive pass. This helps ensure the LLM interprets and defines variables consistently. However, due to the LLM's non-deterministic nature, this cannot be guaranteed.</li>
+      <li><strong>Similarity-Based Grounding:</strong> A more robust approach is to explore similarity-based methods. The embeddings generated for the variables within the formal propositions can be computed and compared with the embeddings of established variables in the system's ontology (e.g., a formal data dictionary) to ensure accurate alignment.</li>
+    </ol>
+
+    <h2 class="subsec"><span class="sec-num">5.3</span>Grounding as a Verification Mechanism</h2>
+    <p>There is significant scope for developing LLM-based solutions to automate grounding. However, automating a verification step using a probabilistic model introduces an ironic challenge: the need to develop a robust verification mechanism for the LLM's own variable-grounding hypothesis. This fundamental trade-off between efficiency and certainty is a central theme for future research in this domain.</p>
+
+    <p>Furthermore, the integration of grounding with autoformalization has broader applications for ensuring that LLM-generated Chain-of-Thought reasoning maintains logical consistency within constrained systems (e.g., smart-home systems, vehicle assistants). Since these systems have a limited set of defined actions, future work can focus on: developing a <strong>knowledge graph</strong> or similar data structure of branching system instructions, creating a mechanism for <strong>LLMs to traverse this structure</strong> while generating output &amp; <strong>employing autoformalization</strong> to guarantee that the LLM's generated output is logically consistent with the system's predefined capabilities.</p>
+
+    <h2 class="subsec"><span class="sec-num">5.4</span>Future Research Questions</h2>
+
+    <p><h3 class="para-head">RQ1</h3> &mdash; <strong>What is the most effective method for autoformalizing an informal statement?</strong> Our findings suggest that a single-pass conversion may not always be accurate, especially for complex requirements. As shown in other studies <sup class="cite"><a href="#ref-11">[11]</a></sup>, generating multiple formalized statements and selecting the most probable one (k-pass) could lead to more reliable conversions.</p>
+
+    <p><h3 class="para-head">RQ2</h3> &mdash; <strong>How can the crucial step of variable grounding and normalization be reliably automated given a set of informal statements?</strong> Our experiment revealed that manual grounding of variables is the most critical and labor-intensive step in this pipeline. While some research suggests using rule-based techniques <sup class="cite"><a href="#ref-rq2b">[26]</a></sup>, there is significant potential for LLMs to automate this step <sup class="cite"><a href="#ref-rq2a">[27]</a></sup>. A key question is which approach is more reliable and scalable.</p>
+
+    <p><h3 class="para-head">RQ3</h3> &mdash; <strong>Can we use autoformalization to develop verification systems for LLMs in environments that require logical consistency?</strong> In this paper, we have shown that the construction of such a formal verification pipeline is feasible, demonstrating its potential as a proof-of-concept for formally assessing the logical equivalence of LLM-generated outputs against original natural language requirements. However, we need to explore algorithms that formally verify autoregressive output against knowledge structures to ensure consistency.</p>
+
+    <p>Autoformalization shows significant potential for logically verifying concepts or ideas generated by probabilistic models. However, more research is needed to optimize this approach and address the challenges identified in this paper.</p>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- 6. Conclusion                                          -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <hr class="section-divider">
+  <section id="sec-conclusion">
+    <h1 class="sec"><span class="sec-num">6</span>Conclusion</h1>
+
+    <p>In this paper, we presented a preliminary exploration of two novel applications of autoformalization: the formal verification of LLM-generated outputs against natural language requirements and the checking of logical equivalence among requirements. Our study served as a <strong>proof-of-concept</strong>, outlining a pipeline that leverages an LLM-based autoformalizer to translate informal statements into formal Lean propositions and then utilizing the autoformalizer to formally prove the equivalence of generated propositions. Through two distinct experiments, we showed that this pipeline holds significant promise for improving the fidelity and consistency of content produced by probabilistic models.</p>
+
+    <p>While our findings are based on a limited sample, they suggest that autoformalization can play a pivotal role in bridging the gap between ambiguous natural language and rigorous, verifiable logic. We also identified several critical avenues for further investigation to generalize and strengthen such a pipeline.</p>
+
+    <p>Ultimately, this paper lays the groundwork for a formal verification framework. As autoformalization methods mature, we envision them becoming an integral practice for ensuring the correctness, reliability, and trustworthiness of LLM-powered applications.</p>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- Appendix                                               -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <hr class="section-divider">
+  <section id="sec-appendix">
+    <div class="appendix-label">Appendix</div>
+    <h1 class="sec"><span class="sec-num">A</span>Prompt Templates</h1>
+
+    <h2 class="subsec"><span class="sec-num">A.1</span>Prompt to Formalize Natural Language Requirement or Scenario</h2>
+
+<pre class="code-block"># Formalize the following requirement using Lean syntax:
+{requirement}
+
+Translate the natural language requirement into a formal Lean 4 proposition. The result
+should be a `def` statement that defines a proposition (`Prop`).
+
+Complete the following code and substitute the brackets with appropriate variables
+from requirements:
+
+The definition should have the following structure:
+
+```lean4
+-- define variables here
+variable (&lt;VARIABLE&gt; : &lt;TYPE&gt;)
+variable (&lt;VARIABLE&gt; : &lt;TYPE&gt;)
+
+def &lt;ACTION_name_FOR_function&gt; : Prop :=
+-- include all conditions in the given here and finally they should either imply or not imply the action
+(CONDITION A \land CONDITION B \land ...) -&gt; ACTION
+```</pre>
+
+    <h2 class="subsec"><span class="sec-num">A.2</span>Prompt to Prove Theorems</h2>
+
+<pre class="code-block">Given the following Lean code, reason out and finally prove that either:
+- the given two functions are logically equivalent and consistent
+- the given two functions are inconsistent
+
+Continue and complete the theorem based on the provided code:
+
+```lean4
+import Mathlib.Data.Real.Basic
+
+variable (front_passenger_seat_belt_reminder_indication_on : Bool)
+
+-- requirement 1
+{requirement_proposition}
+
+-- gherkin output 1
+{gherkin_output_proposition}
+
+theorem req1_eq_req2
+(h_front_belt_status : front_passenger_seat_belt_status = initial_seatbelt_status):
+(front_passenger_seat_belt_status_prop front_passenger_seat_belt_reminder_indication_on
+  front_passenger_seat_belt_status) &lt;-&gt;
+(seatbelt_reminder_activation front_passenger_seat_belt_reminder_indication_on
+  initial_seatbelt_status seat_occupancy final_seatbelt_status) := by
+```</pre>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- References                                             -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <hr class="section-divider">
+  <section class="references" id="sec-references">
+    <h1 class="sec"><span class="sec-num" style="color:var(--muted)"></span>References</h1>
+    <ol>
+      <li id="ref-1">ZZ Ren, Zhihong Shao, Junxiao Song, Huajian Xin, et al. <em>DeepSeek-Prover-V2: Advancing formal mathematical reasoning via reinforcement learning for subgoal decomposition.</em> arXiv:2504.21801, 2025.</li>
+      <li id="ref-2">Leonardo de Moura and Sebastian Ullrich. <em>The Lean 4 theorem prover and programming language.</em> International Conference on Automated Deduction, pp. 625&ndash;635. Springer, 2021.</li>
+      <li id="ref-3">Huajian Xin, Daya Guo, Zhihong Shao, ZZ Ren, et al. <em>Advancing theorem proving in LLMs through large-scale synthetic data.</em> Workshop on Mathematical Reasoning and AI at NeurIPS'24, 2024.</li>
+      <li id="ref-4">Albert Q Jiang, Sean Welleck, Jin Peng Zhou, Wenda Li, et al. <em>Draft, sketch, and prove: Guiding formal theorem provers with informal proofs.</em> arXiv:2210.12283, 2022.</li>
+      <li id="ref-5">Aitor Lewkowycz, Anders Andreassen, David Dohan, Ethan Dyer, et al. <em>Solving quantitative reasoning problems with language models.</em> Advances in Neural Information Processing Systems, 35:3843&ndash;3857, 2022.</li>
+      <li id="ref-6">Zhangir Azerbayev, Hailey Schoelkopf, Keiran Paster, Marco Dos Santos, et al. <em>Llemma: An open language model for mathematics.</em> arXiv:2310.10631, 2023.</li>
+      <li id="ref-7">Haiming Wang, Mert Unsal, Xiaohan Lin, Mantas Baksys, et al. <em>Kimina-Prover Preview: Towards large formal reasoning models with reinforcement learning.</em> arXiv:2504.11354, 2025.</li>
+      <li id="ref-8">Ke Weng, Lun Du, Sirui Li, Wangyue Lu, et al. <em>Autoformalization in the era of large language models: A survey.</em> arXiv:2505.23486, 2025.</li>
+      <li id="ref-9">Kaiyu Yang, Gabriel Poesia, Jingxuan He, Wenda Li, et al. <em>Formal mathematical reasoning: A new frontier in AI.</em> arXiv:2412.16075, 2024.</li>
+      <li id="ref-10">Jin Peng Zhou, Charles Staats, Wenda Li, Christian Szegedy, Kilian Q Weinberger, and Yuhuai Wu. <em>Don't Trust: Verify &mdash; Grounding LLM quantitative reasoning with autoformalization.</em> arXiv:2403.18120, 2024.</li>
+      <li id="ref-11">Zenan Li, Yifan Wu, Zhaoyu Li, Xinming Wei, et al. <em>Autoformalize mathematical statements by symbolic equivalence and semantic consistency.</em> Advances in Neural Information Processing Systems, 37:53598&ndash;53625, 2024.</li>
+      <li id="ref-12">Albert Q Jiang, Wenda Li, and Mateja Jamnik. <em>Multi-language diversity benefits autoformalization.</em> Advances in Neural Information Processing Systems, 37:83600&ndash;83626, 2024.</li>
+      <li id="ref-13">Zhangir Azerbayev, Bartosz Piotrowski, Hailey Schoelkopf, Edward W Ayers, et al. <em>ProofNet: Autoformalizing and formally proving undergraduate-level mathematics.</em> arXiv:2302.12433, 2023.</li>
+      <li id="ref-14">Xiaoyang Liu, Kangjie Bao, Jiashuo Zhang, Yunqi Liu, et al. <em>ATLAS: Autoformalizing Theorems through Lifting, Augmentation, and Synthesis of Data.</em> arXiv:2502.05567, 2025.</li>
+      <li id="ref-15">Kunhao Zheng, Jesse Michael Han, and Stanislas Polu. <em>miniF2F: A cross-system benchmark for formal Olympiad-level mathematics.</em> International Conference on Learning Representations.</li>
+      <li id="ref-16">Lawrence C Paulson. <em>Isabelle: A Generic Theorem Prover.</em> Springer, 1994.</li>
+      <li id="ref-17">G&eacute;rard Huet, Gilles Kahn, and Christine Paulin-Mohring. <em>The Coq proof assistant: A tutorial.</em> Rapport Technique, 178:113, 1997.</li>
+      <li id="ref-18">Willy Chan, Michael Souliman, Jakob Nordhagen, et al. <em>Lean-ing on quality: How high-quality data beats diverse multilingual data in autoformalization.</em> arXiv:2502.15795, 2025.</li>
+      <li id="ref-19">Ran Xin, Chenguang Xi, Jie Yang, et al. <em>BFS-Prover: Scalable best-first tree search for LLM-based automatic theorem proving.</em> arXiv:2502.03438, 2025.</li>
+      <li id="ref-20">Huajian Xin, ZZ Ren, Junxiao Song, et al. <em>DeepSeek-Prover-V1.5: Harnessing proof assistant feedback for reinforcement learning and Monte-Carlo tree search.</em> arXiv:2408.08152, 2024.</li>
+      <li id="ref-21">Wangyue Lu, Lun Du, Sirui Li, Ke Weng, et al. <em>Automated formalization via conceptual retrieval-augmented LLMs.</em> arXiv:2508.06931, 2025.</li>
+      <li id="ref-22">Garett Cunningham, Razvan Bunescu, and David Juedes. <em>Towards autoformalization of mathematics and code correctness: Experiments with elementary proofs.</em> Proceedings of the 1st Workshop on Mathematical Natural Language Processing (MathNLP), pp. 25&ndash;32, 2022.</li>
+      <li id="ref-23">Ahmed Abdeen Hamed, Alessandro Crimi, Magdalena M Misiak, and Byung Suk Lee. <em>From knowledge generation to knowledge verification: examining the biomedical generative capabilities of ChatGPT.</em> iScience, 28(6), 2025.</li>
+      <li id="ref-24">Logan Murphy, Kaiyu Yang, Jialiang Sun, et al. <em>Autoformalizing Euclidean geometry.</em> arXiv:2405.17216, 2024.</li>
+      <li id="ref-25b">Mauricio Soroco, Jialin Song, Mengzhou Xia, et al. <em>PDE-Controller: LLMs for autoformalization and reasoning of PDEs.</em> arXiv:2502.00963, 2025.</li>
+      <li id="ref-25">Yuhuai Wu, Albert Qiaochu Jiang, Wenda Li, Markus Rabe, et al. <em>Autoformalization with large language models.</em> Advances in Neural Information Processing Systems, 35:32353&ndash;32368, 2022.</li>
+      <li id="ref-rq2a">Richard Thompson, Adam Pease, Mathias K&ouml;lsch, and Angelos Toutsios. <em>Grounding terms from an ontology for use in autoformalization: Tokenization is all you need.</em> 19th International Conference on Neurosymbolic Learning and Reasoning, 2025.</li>
+      <li id="ref-rq2b">Amir Aavani, Xiongnan Wu, Eugenia Ternovska, and David Mitchell. <em>Grounding formulas with complex terms.</em> Canadian Conference on Artificial Intelligence, pp. 13&ndash;25. Springer, 2011.</li>
+    </ol>
+  </section>
+
+</div><!-- /.shell -->
+
+<footer style="background:#30e3ca; color:#1a3533; text-align:center; padding:18px 24px; font-family:var(--sans); font-size:12.5px; letter-spacing:0.02em; margin-top:60px;">
+  Mihir Gupte &middot; Ramesh S. &mdash; Technical Report, 2025
+</footer>
+</body>
+</html>
