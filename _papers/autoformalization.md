@@ -20,6 +20,7 @@ Autoformalization, the process of translating informal statements into formal lo
 
 ## Links
 
+- [Web version](https://mihirgupte.github.io/papers/autoformalization_web.html) - Full HTML version
 - [arXiv Paper](https://arxiv.org/pdf/2511.11829) - Full paper PDF
 
 ## Citation
