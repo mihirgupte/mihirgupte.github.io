@@ -5,7 +5,11 @@ layout: archive
 
 {{ content }}
 
-<h3 class="archive__subtitle">Recent Work</h3>
+<h3 class="archive__subtitle">Latest Updates</h3>
+{% for update in site.data.updates %}
+  <p><strong>{{ update.date | date: "%Y-%m-%d" }}</strong>: <a href="{{ update.link }}">{{ update.news }}</a></p>
+{% endfor %}
+
 
 {% assign papers = site.papers | sort: 'date' | reverse | limit: 10 %}
 {% if papers.size > 0 %}

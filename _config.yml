@@ -182,6 +182,7 @@ exclude:
   - .sass-cache
   - assets/js/plugins
   - assets/js/_main.js
+- _papers/autoformalization_web.html
   - assets/js/vendor
   - Capfile
   - CHANGELOG
