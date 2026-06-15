@@ -10,7 +10,7 @@ layout: archive
   <p><strong>{{ update.date | date: "%Y-%m-%d" }}</strong>: <a href="{{ update.link }}">{{ update.news }}</a></p>
 {% endfor %}
 
-
+<h3 class="archive__subtitle">Recent Work</h3>
 {% assign papers = site.papers | sort: 'date' | reverse | limit: 10 %}
 {% if papers.size > 0 %}
   {% assign entries_layout = page.entries_layout | default: 'list' %}
