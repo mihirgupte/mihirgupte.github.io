@@ -21,17 +21,16 @@ layout: archive
   <p>Papers coming soon...</p>
 {% endif %}
 
-<h3 class="archive__subtitle">{{ site.data.ui-text[locale].recent_posts | default: "Recent Posts" }}</h3>
+<h3 class="archive__subtitle">{{ site.data.ui-text[locale].recent_posts | default: "Recent Blogs" }}</h3>
 
-{% if paginator %}
-  {% assign posts = paginator.posts %}
+{% assign blogs = site.blogs | sort: 'date' | reverse | limit: 10 %}
+{% if blogs.size > 0 %}
+  {% assign entries_layout = page.entries_layout | default: 'list' %}
+  <div class="entries-{{ entries_layout }}">
+    {% include documents-collection.html locale=locale entries=blogs type=entries_layout %}
+  </div>
 {% else %}
-  {% assign posts = site.posts %}
+  <p>Blogs coming soon...</p>
 {% endif %}
-
-{% assign entries_layout = page.entries_layout | default: 'list' %}
-<div class="entries-{{ entries_layout }}">
-  {% include documents-collection.html locale=locale entries=posts type=entries_layout %}
-</div>
 
 {% include paginator.html locale=locale %}
