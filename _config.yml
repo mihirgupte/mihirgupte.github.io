@@ -270,6 +270,9 @@ collections:
   papers:
     output: true
     permalink: /:collection/:path/
+  blogs:
+    output: true
+    permalink: /blogs/:path/
 
 # Plugins (previously gems:)
 plugins:
